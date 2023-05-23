@@ -31,18 +31,15 @@ class HelloWorld(Resource):
 @api.route('/data')
 class Data(Resource):
     def post(self):
-        print('TEST1')
         lat = request.json.get('latitude')
         lon = request.json.get('longitude')
         pic = request.json.get('pic')
-        print('TESTAA')
+
         db, cursor = connect_database()
-        print('TEST')
         query = 'INSERT INTO UnsolvedCase (latitude, longitude, image) VALUES(%s,%s,%s)'
         cursor.execute(query, (lat, lon, pic))
-        print('TEST2')
         disconnect_database(db)
-        print('TEST3')
+
         return {'message': 'Add data success', 'status': 200}
 
 @api.route('/data/solved')
