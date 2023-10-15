@@ -1,8 +1,20 @@
 from flask import Flask
-from flask_restx import Api, Resource
+from flask_restx import Api
+from flask_restx import Resource
+from login import Login
+from findpw import Findpassword
+from register import Register
+from userinfo import Userinfo
+from monitoring import Monitoring
 
 app = Flask(__name__)
 api = Api(app)
+
+api.add_namespace(Login, '/signin')
+api.add_namespace(Findpassword, '/findpw')
+api.add_namespace(Register, '/signup')
+api.add_namespace(Userinfo, '/myinfo')
+api.add_namespace(Monitoring, '/list')
 
 @api.route('/hello')
 class HelloWorld(Resource):
