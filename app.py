@@ -6,6 +6,7 @@ from findpw import Findpassword
 from register import Register
 from userinfo import Userinfo
 from monitoring import Monitoring
+from initialize_database import InitializeDatabase
 
 app = Flask(__name__)
 api = Api(app)
@@ -22,4 +23,5 @@ class HelloWorld(Resource):
         return {'message': 'Hello, Worajdold!'}
 
 if __name__ == '__main__':
+    InitializeDatabase()
     app.run(host='0.0.0.0', port='8080', debug=True)
