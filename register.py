@@ -2,19 +2,29 @@ from flask import request
 from flask_restx import Api
 from flask_restx import Resource
 from flask_restx import Namespace
+from flask_restx import reqparse
 from initialize_database import connect_database
 from initialize_database import disconnect_database
 
 Register = Namespace('Register')
 
+signup_post = reqparse.RequestParser()
+signup_post.add_argument('email', type=str, help='email')
+signup_post.add_argument('name', type=str, help='name')
+signup_post.add_argument('password', type=str, help='password')
+signup_post.add_argument('tel', type=str, help='tel')
+
 @Register.route('')
 class Signup(Resource):
+    @Register.doc(parser=signup_post)
     def post(self):
         try:
-            self.email = request.json.get('email')
-            self.name = request.json.get('name')
-            self.password = request.json.get('password')
-            self.tel = request.json.get('tel')
+            args = signup_post.parse_args()
+
+            self.email = args['email']
+            self.name = args['name']
+            self.password = args['password']
+            self.tel = args['tel']
         except:
             print('[!] /signup (POST) : Invalid request data')
             return {
@@ -26,7 +36,7 @@ class Signup(Resource):
         # todo -> status 40000
 
         # handle email exist in Profiles exception
-        if self.checkIsExist():
+        if not self.checkIsExist():
             return {
                 'message' : 'Already exist email',
                 'status' : 40001
@@ -57,6 +67,6 @@ class Signup(Resource):
     def insertDatabase(self):
         db, cursor = connect_database()
 
-        query = f'INSERT INTO Profile VALUES ("{self.email}", "{self.name}", "{self.password}", "{self.tel}")'
+        query = f'INSERT INTO Profiles VALUES ("{self.email}", "{self.name}", "{self.password}", "{self.tel}")'
         cursor.execute(query)
         db.commit()
