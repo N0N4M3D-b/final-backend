@@ -55,3 +55,18 @@ class InitializeDatabase:
                 self.cursor.execute(query)
             except:
                 continue
+
+def connect_database():
+    db = pymysql.connect(host='database',
+        port=3306,
+        user='finaluser',
+        passwd='dongafinal1234!',
+        db='final',
+        charset='utf8'
+    )
+    cursor = db.cursor()
+
+    return db, cursor
+
+def disconnect_database(db):
+    db.close()
