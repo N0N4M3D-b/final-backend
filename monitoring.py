@@ -5,6 +5,16 @@ from flask_restx import Namespace
 
 Monitoring = Namespace('Monitoring')
 
+@Monitoring.route('/unsolved/<int:index>')
+class UnsolvedGet(Resource):
+    def get(self, index):
+        pass
+
+@Monitoring.route('/solved/<int:index>')
+class SolvedGet(Resource):
+    def get(self, index):
+        pass
+
 @Monitoring.route('/unsolved')
 class UnSolved(Resource):
     def post(self):
