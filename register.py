@@ -57,6 +57,6 @@ class Signup(Resource):
     def insertDatabase(self):
         db, cursor = connect_database()
 
-        qeury = f'INSERT INTO Profile VALUES ("{self.email}", "{self.name}", "{self.password}", "{self.tel}")'
+        query = f'INSERT INTO Profile VALUES ("{self.email}", "{self.name}", "{self.password}", "{self.tel}")'
         cursor.execute(query)
         db.commit()
