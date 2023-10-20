@@ -29,23 +29,19 @@ class Signin(Resource):
                 'status' : 400
             }
 
-        result = self.isValidAccount()
+        name = self.isValidAccount()
+        is_valid = (name != '')
+        message = 'Login success' if is_valid else "Login fail"
+        status = 200 if is_valid else 40000
 
-        if result[0]:
-            return {
-                'name' : result[1],
-                'message' : 'Login success',
-                'status' : 200
-            }
-        else:
-            return {
-                'name' : '',
-                'message' : "Login fail",
-                'status' : 40000
-            }
+        return {
+            'name' : name,
+            'message' : message,
+            'status' : status
+        }
 
 
-    # Verify if it's a valid account
+    # Verify if it's a valid account and return name
     def isValidAccount(self):
         db, cursor = connect_database()
         query = f'SELECT name FROM Profiles WHERE email="{self.email}" AND password="{self.password}"'
@@ -55,9 +51,9 @@ class Signin(Resource):
         disconnect_database(db)
 
         if len(result) != 0:
-            return True, result[0][0]
+            return result[0][0]
         else:
-            return False, ''
+            return ''
         
         
 
