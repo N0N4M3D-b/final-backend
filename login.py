@@ -14,15 +14,14 @@ signin_post.add_argument('password', type=str, help='Please enter your password'
 
 @Login.route('')
 class Signin(Resource):
-    @Register.doc(parser=signin_post)
+    @Login.doc(parser=signin_post)
     def post(self):
-        # request parsing
+        # Parse request arguments
         try:
             args = signin_post.parse_args()
 
             self.email = args['email']
             self.password = args['password']
-
         except:
             print('[!] /signin (POST) : Invalid request data')
             return {
@@ -30,6 +29,35 @@ class Signin(Resource):
                 'status' : 400
             }
 
+        is_valid = self.isValidAccount()
+
+        if is_valid[0]:
+            return {
+                'name' : is_valid[1],
+                'message' : 'Login success',
+                'status' : 200
+            }
+        else:
+            return {
+                'name' : '',
+                'message' : "Login fail",
+                'status' : 40000
+            }
+
+
+    # Verify if it's a valid account
+    def isValidAccount(self):
+        db, cursor = connect_database()
+        query = f'SELECT name FROM Profiles WHERE email="{self.email}" AND password="{self.password}"'
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+        disconnect_database(db)
+
+        if len(result) != 0:
+            return True, result[0][0]
+        else:
+            return False, ''
         
         
 
