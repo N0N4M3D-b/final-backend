@@ -29,11 +29,11 @@ class Signin(Resource):
                 'status' : 400
             }
 
-        is_valid = self.isValidAccount()
+        result = self.isValidAccount()
 
-        if is_valid[0]:
+        if result[0]:
             return {
-                'name' : is_valid[1],
+                'name' : result[1],
                 'message' : 'Login success',
                 'status' : 200
             }
