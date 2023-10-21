@@ -23,15 +23,18 @@ class Signin(Resource):
             }
 
         name = self.isValidAccount()
-        is_valid = (name != '')
-        message = 'Login success' if is_valid else "Login fail"
-        status = 200 if is_valid else 40000
 
-        return {
-            'name' : name,
-            'message' : message,
-            'status' : status
-        }
+        if name != '':
+            return {
+                'name' : name,
+                'message' : 'Login success',
+                'status' : 200
+            }
+        else:
+            return {
+                'message' : 'Login fail',
+                'status' : 40000
+            }
 
 
     # Verify if it's a valid account and return name
