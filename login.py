@@ -8,20 +8,13 @@ from initialize_database import disconnect_database
 
 Login = Namespace('Login')
 
-signin_post = reqparse.RequestParser()
-signin_post.add_argument('email', type=str, help='Please enter your email')
-signin_post.add_argument('password', type=str, help='Please enter your password')
-
 @Login.route('')
 class Signin(Resource):
-    @Login.doc(parser=signin_post)
     def post(self):
         # Parse request arguments
         try:
-            args = signin_post.parse_args()
-
-            self.email = args['email']
-            self.password = args['password']
+            self.email = request.json.get('email')
+            self.password = request.json.get('password')
         except:
             print('[!] /signin (POST) : Invalid request data')
             return {
