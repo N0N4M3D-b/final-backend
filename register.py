@@ -8,23 +8,14 @@ from initialize_database import disconnect_database
 
 Register = Namespace('Register')
 
-signup_post = reqparse.RequestParser()
-signup_post.add_argument('email', type=str, help='email')
-signup_post.add_argument('name', type=str, help='name')
-signup_post.add_argument('password', type=str, help='password')
-signup_post.add_argument('tel', type=str, help='tel')
-
 @Register.route('')
 class Signup(Resource):
-    @Register.doc(parser=signup_post)
     def post(self):
         try:
-            args = signup_post.parse_args()
-
-            self.email = args['email']
-            self.name = args['name']
-            self.password = args['password']
-            self.tel = args['tel']
+            self.email = request.json.get('email')
+            self.name = request.json.get('name')
+            self.password = request.json.get('password')
+            self.tel = request.json.get('tel')
         except:
             print('[!] /signup (POST) : Invalid request data')
             return {
