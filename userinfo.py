@@ -32,11 +32,48 @@ class Myinfo(Resource):
         
 
     def delete(self):
-        pass
+        # Parse request arguments
+        try:
+            self.email = request.json.get('email')
+        except:
+            print('[!] /myinfo (DELETE) : Invalid request data')
+            return {
+                'message' : 'Invalid request data',
+                'status' : 400
+            }
+
+        self.deleteUser()
+
+        return {
+            'message' : 'user delete success',
+            'status' : 200
+        }
 
 
     def put(self):
-        pass
+        # Parse request arguments
+        try:
+            self.email = request.json.get('email')
+            self.old = request.json.get('old')
+            self.new = request.json.get('new')
+        except:
+            print('[!] /myinfo (PUT) : Invalid request data')
+            return {
+                'message' : 'Invalid request data',
+                'status' : 400
+            }
+
+        result = self.changePassword()
+        if result:
+            return {
+                'message' : 'change password success',
+                'status' : 200
+            }
+        else:
+            return {
+                'message' : 'change password fail',
+                'status' : 40000
+            }
 
     
     def getUserInfo(self):
@@ -49,3 +86,29 @@ class Myinfo(Resource):
         disconnect_database(db)
 
         return name, tel
+
+    
+    def deleteUser(self):
+        db, cursor = connect_database()
+        query = f'DELETE FROM Profiles WHERE email="{self.email}"'
+
+        cursor.execute(query)
+        db.commit()
+
+    
+    def changePassword(self):
+        db, cursor = connect_database()
+        query = f'SELECT 1 from Profiles WHERE email="{self.email}" AND password="{self.old}"'
+        cursor.execute(query)
+
+        is_valid = len(cursor.fetchall()) != 0
+
+        if not is_valid:
+            return False
+
+        query = f'UPDATE Profiles SET password="{self.new}" WHERE email="{self.email}"'
+
+        cursor.execute(query)
+        db.commit()
+
+        return True
