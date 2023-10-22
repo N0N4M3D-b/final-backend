@@ -291,11 +291,37 @@ class UnSolved(Resource):
 
 @Monitoring.route('/solved')
 class Solved(Resource):
-    def post(self):
-        pass
-
     def put(self):
-        pass
+        try:
+            self.caseNum = int(request.json.get('caseNum'))
+        except:
+            print('[!] /unsolved (PUT) : Invalid request data')
+            return {
+                'message' : 'Invalid request data',
+                'status' : 400
+            }
+        
+        if isExistCaseNum(0, self.caseNum) == False:
+            return {
+                'message' : 'Invalid case number',
+                'status' : 40001
+            }
+        
+        self.case_num_data = getCaseOne(1, self.caseNum)
+
+        try:
+            setCaseOne(1, self.case_num_data)
+            deleteCaseOne(1, self.caseNum)
+
+            return {
+                'message' : 'Move SolvedCase data to UnsolvedCase Success',
+                'status' : 200
+            }
+        except:
+            return {
+                'message' : 'Database error',
+                'status' : 400
+            }
 
     def delete(self):
         pass
