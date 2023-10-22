@@ -128,8 +128,104 @@ class UnSolved(Resource):
         cursor.execute(query)
         db.commit()
 
+        disconnect_database(db)
+
     def put(self):
-        pass
+        try:
+            self.caseNum = int(request.json.get('caseNum'))
+            self.email = request.json.get('email')
+            #self.solvedTime = request.json.get('solvedTime')
+        except:
+            print('[!] /unsolved (PUT) : Invalid request data')
+            return {
+                'message' : 'Invalid request data',
+                'status' : 400
+            }
+        try:
+            self.name = self.getUserNameByEmail()
+        except:
+            return {
+                'message' : 'Invalid user access',
+                'status' : 40000
+            } 
+        
+        if self.isExistCaseNum() == False:
+            return {
+                'message' : 'Invalid case number',
+                'status' : 40001
+            }
+        
+        self.case_num_data = self.getUnsolvedCaseOne()
+
+        try:
+            self.setSolvedCaseOne()
+            self.deleteUnsolvedCaseOne()
+
+            return {
+                'message' : 'Move UnsolvedCase data to SolvedCase Success',
+                'status' : 200
+            }
+        except:
+            return {
+                'message' : 'Database error',
+                'status' : 400
+            }
+
+    def isExistCaseNum(self):
+        db, cursor = connect_database()
+
+        query = f'SELECT COUNT(*) FROM UnsolvedCase WHERE caseNum = {self.caseNum}'
+        cursor.execute(query)
+        total = cursor.fetchone()[0]
+
+        disconnect_database(db)
+
+        if total == 1:
+            return True
+        else:
+            return False
+        
+    def getUnsolvedCaseOne(self):
+        db, cursor = connect_database()
+
+        query = f'SELECT * FROM UnsolvedCase WHERE caseNum = {self.caseNum}'
+        cursor.execute(query)
+        result = cursor.fetchone()
+
+        disconnect_database(db)
+
+        return result
+    
+    def getUserNameByEmail(self):
+        db, cursor = connect_database()
+
+        query = f'SELECT name FROM Profiles WHERE email = "{self.email}"'
+        cursor.execute(query)
+        result = cursor.fetchone()[0]
+
+        disconnect_database(db)
+
+        return result
+    
+    def setSolvedCaseOne(self):
+        db, cursor = connect_database()
+
+        self.detected_time = self.case_num_data[4].strftime("%Y/%m/%d %H:%M:%S")
+        
+        query = f'INSERT INTO SolvedCase VALUES (NULL, "{self.case_num_data[1]}", "{self.case_num_data[2]}", "{self.case_num_data[3]}", "{self.name}", "{self.email}", "{self.detected_time}", CURRENT_TIMESTAMP)'
+        cursor.execute(query)
+        db.commit()
+
+        disconnect_database(db)
+
+    def deleteUnsolvedCaseOne(self):
+        db, cursor = connect_database()
+
+        query = f'DELETE FROM UnsolvedCase WHERE caseNum = {self.caseNum}'
+        cursor.execute(query)
+        db.commit()
+
+        disconnect_database(db)
 
 @Monitoring.route('/solved')
 class Solved(Resource):
