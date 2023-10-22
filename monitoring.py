@@ -28,12 +28,13 @@ def checkPageType(table_flag, index):
     
     if table_flag == 0:
         PAGE_MAX = 10
+        query = f'SELECT COUNT(*) FROM UnsolvedCase'
     else:
         PAGE_MAX = 5
+        query = f'SELECT COUNT(*) FROM SolvedCase'
 
     db, cursor = connect_database()
-
-    query = f'SELECT COUNT(*) FROM UnsolvedCase'
+    
     cursor.execute(query)
     total = cursor.fetchone()[0]
 
@@ -149,7 +150,7 @@ class UnsolvedGet(Resource):
             tmp_dict["latitude"] = element[1]
             tmp_dict["longitude"] = element[2]
             tmp_dict["pic"] = element[3]
-            tmp_dict["detectedTime"] = db_element[0][4].strftime("%Y/%m/%d %H:%M:%S")
+            tmp_dict["detectedTime"] = element[4].strftime("%Y/%m/%d %H:%M:%S")
 
             data.append(copy.deepcopy(tmp_dict))
 
@@ -163,7 +164,49 @@ class UnsolvedGet(Resource):
 @Monitoring.route('/solved/<int:index>')
 class SolvedGet(Resource):
     def get(self, index):
-        pass
+        self.index = index
+        pagetype = checkPageType(1, self.index)
+
+        if pagetype == PageType.OOB:
+            return {
+                'message' : 'Invalid index value',
+                'status' : int(PageType.OOB)
+            }
+        
+        db_element = getCase(1, self.index)
+        
+        data = []
+
+        for element in db_element:
+            tmp_dict = {}
+            tmp_dict["caseNum"] = element[0]
+            tmp_dict["latitude"] = element[1]
+            tmp_dict["longitude"] = element[2]
+            tmp_dict["pic"] = element[3]
+            tmp_dict["detectedTime"] = element[4].strftime("%Y/%m/%d %H:%M:%S")
+            tmp_dict["solvedTime"] = element[5].strftime("%Y/%m/%d %H:%M:%S")
+            tmp_dict["email"] = element[6]
+            tmp_dict["tel"] = self.getUserTelByEmail(tmp_dict["email"])
+
+            data.append(copy.deepcopy(tmp_dict))
+
+        return {
+            'data' : data,
+            'message' : 'Get UnsolvedCase data success',
+            'status' : int(pagetype)
+        }
+    
+    def getUserTelByEmail(self, email):
+        db, cursor = connect_database()
+
+        query = f'SELECT tel FROM Profiles WHERE email = "{email}"'
+        cursor.execute(query)
+        result = cursor.fetchone()[0]
+
+        disconnect_database(db)
+
+        return result
+
 
 @Monitoring.route('/unsolved')
 class UnSolved(Resource):
@@ -173,7 +216,7 @@ class UnSolved(Resource):
             self.longitude = request.json.get('longitude')
             self.pic = request.json.get('pic')
         except:
-            print('[!] /unsolved (POST) : Invalid request data')
+            print('[!] /list/unsolved (POST) : Invalid request data')
             return {
                 'message' : 'Invalid request data',
                 'status' : 400
@@ -197,9 +240,8 @@ class UnSolved(Resource):
         try:
             self.caseNum = int(request.json.get('caseNum'))
             self.email = request.json.get('email')
-            #self.solvedTime = request.json.get('solvedTime')
         except:
-            print('[!] /unsolved (PUT) : Invalid request data')
+            print('[!] /list/unsolved (PUT) : Invalid request data')
             return {
                 'message' : 'Invalid request data',
                 'status' : 400
@@ -248,11 +290,57 @@ class UnSolved(Resource):
 
 @Monitoring.route('/solved')
 class Solved(Resource):
-    def post(self):
-        pass
-
     def put(self):
-        pass
+        try:
+            self.caseNum = int(request.json.get('caseNum'))
+        except:
+            print('[!] /list/solved (PUT) : Invalid request data')
+            return {
+                'message' : 'Invalid request data',
+                'status' : 400
+            }
+        
+        if isExistCaseNum(0, self.caseNum) == False:
+            return {
+                'message' : 'Invalid case number',
+                'status' : 40000
+            }
+        
+        self.case_num_data = getCaseOne(1, self.caseNum)
+
+        try:
+            setCaseOne(1, self.case_num_data)
+            deleteCaseOne(1, self.caseNum)
+
+            return {
+                'message' : 'Move SolvedCase data to UnsolvedCase Success',
+                'status' : 200
+            }
+        except:
+            return {
+                'message' : 'Database error',
+                'status' : 400
+            }
 
     def delete(self):
-        pass
+        try:
+            self.caseNum = int(request.json.get('caseNum'))
+        except:
+            print('[!] /list/solved (DELETE) : Invalid request data')
+            return {
+                'message' : 'Invalid request data',
+                'status' : 400
+            }
+        
+        if isExistCaseNum(1, self.caseNum) == False:
+            return {
+                'message' : 'Invalid case number',
+                'status' : 40000
+            }
+        
+        deleteCaseOne(1, self.caseNum)
+
+        return {
+            'message' : 'Delete SolvedCase data Success',
+            'status' : 200
+        }
