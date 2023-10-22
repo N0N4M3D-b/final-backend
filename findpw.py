@@ -4,6 +4,8 @@ from flask_restx import Resource
 from flask_restx import Namespace
 import string
 import secrets
+import smtplib
+from email.mime.text import MIMEText
 
 Findpassword = Namespace('Findpassword')
 
@@ -22,11 +24,38 @@ class Findpw(Resource):
                 'status' : 400
             }
 
+        if not self.isValidemail():
+            return {
+                'message' : 'Email does not exist'
+                'status' : 40000
+            }
+
+        new_pw = self.generateNewPassword(20)
+        self.sendEmail(new_pw)
+
         return {
-            'new pass' : self.generateNewPassword(20)
+            'message' : 'Success',
+            'status' : 200
         }
 
 
+
+    # Verify if it's a valid email
+    def isValidemail(self):
+        db, cursor = connect_database()
+        query = f'SELECT 1 FROM Profiles WHERE email="{self.email}"'
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+        disconnect_database(db)
+
+        return len(result) != 0
+
+
     def generateNewPassword(self, pw_length):
-        new_password = ''.join([secrets.choice(pw_seq) for _ in range(pw_length)])
-        return new_password
+        new_pw = ''.join([secrets.choice(pw_seq) for _ in range(pw_length)])
+        return new_pw
+
+
+    def sendEmail(self, new_pw):
+
