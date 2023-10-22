@@ -216,7 +216,7 @@ class UnSolved(Resource):
             self.longitude = request.json.get('longitude')
             self.pic = request.json.get('pic')
         except:
-            print('[!] /unsolved (POST) : Invalid request data')
+            print('[!] /list/unsolved (POST) : Invalid request data')
             return {
                 'message' : 'Invalid request data',
                 'status' : 400
@@ -240,9 +240,8 @@ class UnSolved(Resource):
         try:
             self.caseNum = int(request.json.get('caseNum'))
             self.email = request.json.get('email')
-            #self.solvedTime = request.json.get('solvedTime')
         except:
-            print('[!] /unsolved (PUT) : Invalid request data')
+            print('[!] /list/unsolved (PUT) : Invalid request data')
             return {
                 'message' : 'Invalid request data',
                 'status' : 400
@@ -295,7 +294,7 @@ class Solved(Resource):
         try:
             self.caseNum = int(request.json.get('caseNum'))
         except:
-            print('[!] /unsolved (PUT) : Invalid request data')
+            print('[!] /list/solved (PUT) : Invalid request data')
             return {
                 'message' : 'Invalid request data',
                 'status' : 400
@@ -304,7 +303,7 @@ class Solved(Resource):
         if isExistCaseNum(0, self.caseNum) == False:
             return {
                 'message' : 'Invalid case number',
-                'status' : 40001
+                'status' : 40000
             }
         
         self.case_num_data = getCaseOne(1, self.caseNum)
@@ -324,4 +323,24 @@ class Solved(Resource):
             }
 
     def delete(self):
-        pass
+        try:
+            self.caseNum = int(request.json.get('caseNum'))
+        except:
+            print('[!] /list/solved (DELETE) : Invalid request data')
+            return {
+                'message' : 'Invalid request data',
+                'status' : 400
+            }
+        
+        if isExistCaseNum(1, self.caseNum) == False:
+            return {
+                'message' : 'Invalid case number',
+                'status' : 40000
+            }
+        
+        deleteCaseOne(1, self.caseNum)
+
+        return {
+            'message' : 'Delete SolvedCase data Success',
+            'status' : 200
+        }
