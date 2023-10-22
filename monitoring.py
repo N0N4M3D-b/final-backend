@@ -2,15 +2,93 @@ from flask import request
 from flask_restx import Api
 from flask_restx import Resource
 from flask_restx import Namespace
+from enum import Enum
 from initialize_database import connect_database
 from initialize_database import disconnect_database
+import copy
 
 Monitoring = Namespace('Monitoring')
+
+class PageType(Enum):
+    OOB = 40000
+    SINGLE = 20000
+    FIRST = 20001
+    LAST = 20002
+    MIDDLE = 20003
+
+    def __int__(self):
+        return self.value
 
 @Monitoring.route('/unsolved/<int:index>')
 class UnsolvedGet(Resource):
     def get(self, index):
-        pass
+        self.index = index
+        pagetype = self.checkPageType()
+
+        if pagetype == PageType.OOB:
+            return {
+                'message' : 'Invalid index value',
+                'status' : int(PageType.OOB)
+            }
+        
+        db_element = self.getUnsolvedCase()
+        
+        data = []
+
+        for element in db_element:
+            tmp_dict = {}
+            tmp_dict["caseNum"] = element[0]
+            tmp_dict["latitude"] = element[1]
+            tmp_dict["longitude"] = element[2]
+            tmp_dict["pic"] = element[3]
+            tmp_dict["detectedTime"] = db_element[0][4].strftime("%Y/%m/%d %H:%M:%S")
+
+            data.append(copy.deepcopy(tmp_dict))
+
+        return {
+            'data' : data,
+            'message' : 'Get UnsolvedCase data success',
+            'status' : int(pagetype)
+        }
+
+    def checkPageType(self):
+        # out of boundary -> total < index
+        # single page (0) -> total <= 10
+        # first page -> index == 1
+        # last page -> total - index < 10
+        # middle page -> else
+
+        db, cursor = connect_database()
+
+        query = f'SELECT COUNT(*) FROM UnsolvedCase'
+        cursor.execute(query)
+        total = cursor.fetchone()[0]
+
+        disconnect_database(db)
+
+        if self.index > total or self.index < 1:
+            return PageType.OOB
+        elif self.index == 1:
+            if total <= 10:
+                return PageType.SINGLE
+            else:
+                return PageType.FIRST
+        elif total - self.index < 10:
+            return PageType.LAST
+        else:
+            return PageType.MIDDLE
+        
+    def getUnsolvedCase(self):
+        db, cursor = connect_database()
+
+        query = f'SELECT * FROM UnsolvedCase ORDER BY detectedTime DESC LIMIT {self.index - 1}, 10'
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+        disconnect_database(db)
+
+        return result
+
 
 @Monitoring.route('/solved/<int:index>')
 class SolvedGet(Resource):
