@@ -21,7 +21,13 @@ class Myinfo(Resource):
                 'status' : 400
             }
 
-        name, tel = self.getUserInfo()
+        try:
+            name, tel = self.getUserInfo()
+        except:
+            return {
+                'message' : 'Invalid user info',
+                'status' : 40000
+            }
 
         return {
             'name' : name,
@@ -42,12 +48,18 @@ class Myinfo(Resource):
                 'status' : 400
             }
 
-        self.deleteUser()
+        result = self.deleteUser()
 
-        return {
-            'message' : 'user delete success',
-            'status' : 200
-        }
+        if result:
+            return {
+                'message' : 'user delete success',
+                'status' : 200
+            }
+        else:
+            return {
+                'message' : 'Invalid user info',
+                'status' : 40000
+            }
 
 
     def put(self):
@@ -63,7 +75,14 @@ class Myinfo(Resource):
                 'status' : 400
             }
 
-        result = self.changePassword()
+        try:
+            result = self.changePassword()
+        except:
+            return {
+                'message' : 'Invalid user info',
+                'status' : 40000
+            }
+
         if result:
             return {
                 'message' : 'change password success',
@@ -72,7 +91,7 @@ class Myinfo(Resource):
         else:
             return {
                 'message' : 'change password fail',
-                'status' : 40000
+                'status' : 40001
             }
 
     
@@ -90,10 +109,18 @@ class Myinfo(Resource):
     
     def deleteUser(self):
         db, cursor = connect_database()
+        query = f'SELECT 1 FROM Profiles WHERE email="{self.email}"'
+        cursor.execute(query)
+
+        if len(cursor.fetchall()) == 0:
+            return False
+
         query = f'DELETE FROM Profiles WHERE email="{self.email}"'
 
         cursor.execute(query)
         db.commit()
+
+        return True
 
     
     def changePassword(self):
@@ -108,7 +135,12 @@ class Myinfo(Resource):
 
         query = f'UPDATE Profiles SET password="{self.new}" WHERE email="{self.email}"'
 
-        cursor.execute(query)
+        try:
+            cursor.execute(query)
+        except:
+            db.rollback()
+            raise
+
         db.commit()
 
         return True

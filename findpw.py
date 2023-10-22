@@ -24,13 +24,14 @@ class Findpw(Resource):
                 'status' : 400
             }
 
-        if not self.isValidemail():
+        if not self.isValidEmail():
             return {
                 'message' : 'Email does not exist'
                 'status' : 40000
             }
 
         new_pw = self.generateNewPassword(20)
+        self.updatePassword(new_pw)
         self.sendEmail(new_pw)
 
         return {
@@ -41,7 +42,7 @@ class Findpw(Resource):
 
 
     # Verify if it's a valid email
-    def isValidemail(self):
+    def isValidEmail(self):
         db, cursor = connect_database()
         query = f'SELECT 1 FROM Profiles WHERE email="{self.email}"'
         cursor.execute(query)
@@ -55,6 +56,13 @@ class Findpw(Resource):
     def generateNewPassword(self, pw_length):
         new_pw = ''.join([secrets.choice(pw_seq) for _ in range(pw_length)])
         return new_pw
+
+
+    def updatePassword(self, new_pw):
+        db, cursor = connect_database()
+        query = f'UPDATE Profiles SET password="{new_pw}" WHERE email="{self.email}"'
+        cursor.execute(query)
+        disconnect_database(db)
 
 
     def sendEmail(self, new_pw):
