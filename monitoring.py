@@ -19,11 +19,119 @@ class PageType(Enum):
     def __int__(self):
         return self.value
 
+def checkPageType(table_flag, index):
+    # out of boundary -> total < index
+    # single page (0) -> total <= (10/5)
+    # first page -> index == 1
+    # last page -> total - index < (10/5)
+    # middle page -> else
+    
+    if table_flag == 0:
+        PAGE_MAX = 10
+    else:
+        PAGE_MAX = 5
+
+    db, cursor = connect_database()
+
+    query = f'SELECT COUNT(*) FROM UnsolvedCase'
+    cursor.execute(query)
+    total = cursor.fetchone()[0]
+
+    disconnect_database(db)
+
+    if index > total or index < 1:
+        return PageType.OOB
+    elif index == 1:
+        if total <= PAGE_MAX:
+            return PageType.SINGLE
+        else:
+            return PageType.FIRST
+    elif total - index < PAGE_MAX:
+        return PageType.LAST
+    else:
+        return PageType.MIDDLE
+
+def isExistCaseNum(table_flag, caseNum):
+    db, cursor = connect_database()
+
+    if table_flag == 0:
+        query = f'SELECT COUNT(*) FROM UnsolvedCase WHERE caseNum = {caseNum}'
+    else:
+        query = f'SELECT COUNT(*) FROM SolvedCase WHERE caseNum = {caseNum}'
+
+    cursor.execute(query)
+    total = cursor.fetchone()[0]
+
+    disconnect_database(db)
+
+    if total == 1:
+        return True
+    else:
+        return False
+    
+def getCase(table_flag, index):
+    db, cursor = connect_database()
+
+    if table_flag == 0:
+        query = f'SELECT * FROM UnsolvedCase ORDER BY detectedTime DESC LIMIT {index - 1}, 10'
+    else:
+        query = f'SELECT * FROM SolvedCase ORDER BY detectedTime DESC LIMIT {index - 1}, 5'
+
+    cursor.execute(query)
+    result = cursor.fetchall()
+
+    disconnect_database(db)
+
+    return result
+
+def getCaseOne(table_flag, caseNum):
+    db, cursor = connect_database()
+
+    if table_flag == 0:
+        query = f'SELECT * FROM UnsolvedCase WHERE caseNum = {caseNum}'
+    else:
+        query = f'SELECT * FROM SolvedCase WHERE caseNum = {caseNum}'
+
+    cursor.execute(query)
+    result = cursor.fetchone()
+
+    disconnect_database(db)
+
+    return result
+
+def setCaseOne(table_flag, case_num_data, email=None, name=None, new_case_flag=None):
+    db, cursor = connect_database()
+    
+    if table_flag == 0 and new_case_flag == True:
+        query = f'INSERT INTO UnsolvedCase VALUES (NULL, "{case_num_data[1]}", "{case_num_data[2]}", "{case_num_data[3]}", CURRENT_TIMESTAMP)'
+    elif table_flag == 0:
+        query = f'INSERT INTO SolvedCase VALUES (NULL, "{case_num_data[1]}", "{case_num_data[2]}", "{case_num_data[3]}", "{case_num_data[4].strftime("%Y/%m/%d %H:%M:%S")}", CURRENT_TIMESTAMP, "{email}", "{name}")'
+    else:
+        query = f'INSERT INTO UnsolvedCase VALUES (NULL, "{case_num_data[1]}", "{case_num_data[2]}", "{case_num_data[3]}", "{case_num_data[4].strftime("%Y/%m/%d %H:%M:%S")}")'
+
+    cursor.execute(query)
+    db.commit()
+
+    disconnect_database(db)
+
+def deleteCaseOne(table_flag, caseNum):
+    db, cursor = connect_database()
+
+    if table_flag == 0:
+        query = f'DELETE FROM UnsolvedCase WHERE caseNum = {caseNum}'
+    else:
+        query = f'DELETE FROM SolvedCase WHERE caseNum = {caseNum}'
+
+    cursor.execute(query)
+    db.commit()
+
+    disconnect_database(db)
+
 @Monitoring.route('/unsolved/<int:index>')
 class UnsolvedGet(Resource):
     def get(self, index):
         self.index = index
-        pagetype = self.checkPageType()
+        pagetype = checkPageType(0, self.index)
 
         if pagetype == PageType.OOB:
             return {
@@ -31,7 +139,7 @@ class UnsolvedGet(Resource):
                 'status' : int(PageType.OOB)
             }
         
-        db_element = self.getUnsolvedCase()
+        db_element = getCase(0, self.index)
         
         data = []
 
@@ -50,44 +158,6 @@ class UnsolvedGet(Resource):
             'message' : 'Get UnsolvedCase data success',
             'status' : int(pagetype)
         }
-
-    def checkPageType(self):
-        # out of boundary -> total < index
-        # single page (0) -> total <= 10
-        # first page -> index == 1
-        # last page -> total - index < 10
-        # middle page -> else
-
-        db, cursor = connect_database()
-
-        query = f'SELECT COUNT(*) FROM UnsolvedCase'
-        cursor.execute(query)
-        total = cursor.fetchone()[0]
-
-        disconnect_database(db)
-
-        if self.index > total or self.index < 1:
-            return PageType.OOB
-        elif self.index == 1:
-            if total <= 10:
-                return PageType.SINGLE
-            else:
-                return PageType.FIRST
-        elif total - self.index < 10:
-            return PageType.LAST
-        else:
-            return PageType.MIDDLE
-        
-    def getUnsolvedCase(self):
-        db, cursor = connect_database()
-
-        query = f'SELECT * FROM UnsolvedCase ORDER BY detectedTime DESC LIMIT {self.index - 1}, 10'
-        cursor.execute(query)
-        result = cursor.fetchall()
-
-        disconnect_database(db)
-
-        return result
 
 
 @Monitoring.route('/solved/<int:index>')
@@ -110,7 +180,9 @@ class UnSolved(Resource):
             }
         
         try:
-            self.UnsolvedInsertDatabase()
+            case_num_data = (None, self.latitude, self.longitude, self.pic)
+            print(case_num_data[1])
+            setCaseOne(0, case_num_data, new_case_flag=True)
         except:
             return {
                 'message' : 'Database error',
@@ -120,15 +192,6 @@ class UnSolved(Resource):
             'message' : 'Register unsolved case success',
             'status' : 200
         }
-        
-    def UnsolvedInsertDatabase(self):
-        db, cursor = connect_database()
-
-        query = f'INSERT INTO UnsolvedCase VALUES (NULL, "{self.latitude}", "{self.longitude}", "{self.pic}", CURRENT_TIMESTAMP)'
-        cursor.execute(query)
-        db.commit()
-
-        disconnect_database(db)
 
     def put(self):
         try:
@@ -149,17 +212,17 @@ class UnSolved(Resource):
                 'status' : 40000
             } 
         
-        if self.isExistCaseNum() == False:
+        if isExistCaseNum(0, self.caseNum) == False:
             return {
                 'message' : 'Invalid case number',
                 'status' : 40001
             }
         
-        self.case_num_data = self.getUnsolvedCaseOne()
+        self.case_num_data = getCaseOne(0, self.caseNum)
 
         try:
-            self.setSolvedCaseOne()
-            self.deleteUnsolvedCaseOne()
+            setCaseOne(0, self.case_num_data, self.email, self.name)
+            deleteCaseOne(0, self.caseNum)
 
             return {
                 'message' : 'Move UnsolvedCase data to SolvedCase Success',
@@ -170,31 +233,6 @@ class UnSolved(Resource):
                 'message' : 'Database error',
                 'status' : 400
             }
-
-    def isExistCaseNum(self):
-        db, cursor = connect_database()
-
-        query = f'SELECT COUNT(*) FROM UnsolvedCase WHERE caseNum = {self.caseNum}'
-        cursor.execute(query)
-        total = cursor.fetchone()[0]
-
-        disconnect_database(db)
-
-        if total == 1:
-            return True
-        else:
-            return False
-        
-    def getUnsolvedCaseOne(self):
-        db, cursor = connect_database()
-
-        query = f'SELECT * FROM UnsolvedCase WHERE caseNum = {self.caseNum}'
-        cursor.execute(query)
-        result = cursor.fetchone()
-
-        disconnect_database(db)
-
-        return result
     
     def getUserNameByEmail(self):
         db, cursor = connect_database()
@@ -207,25 +245,6 @@ class UnSolved(Resource):
 
         return result
     
-    def setSolvedCaseOne(self):
-        db, cursor = connect_database()
-
-        self.detected_time = self.case_num_data[4].strftime("%Y/%m/%d %H:%M:%S")
-        
-        query = f'INSERT INTO SolvedCase VALUES (NULL, "{self.case_num_data[1]}", "{self.case_num_data[2]}", "{self.case_num_data[3]}", "{self.name}", "{self.email}", "{self.detected_time}", CURRENT_TIMESTAMP)'
-        cursor.execute(query)
-        db.commit()
-
-        disconnect_database(db)
-
-    def deleteUnsolvedCaseOne(self):
-        db, cursor = connect_database()
-
-        query = f'DELETE FROM UnsolvedCase WHERE caseNum = {self.caseNum}'
-        cursor.execute(query)
-        db.commit()
-
-        disconnect_database(db)
 
 @Monitoring.route('/solved')
 class Solved(Resource):
