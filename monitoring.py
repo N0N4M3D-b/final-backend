@@ -163,7 +163,34 @@ class UnsolvedGet(Resource):
 @Monitoring.route('/solved/<int:index>')
 class SolvedGet(Resource):
     def get(self, index):
-        pass
+        self.index = index
+        pagetype = checkPageType(1, self.index)
+
+        if pagetype == PageType.OOB:
+            return {
+                'message' : 'Invalid index value',
+                'status' : int(PageType.OOB)
+            }
+        
+        db_element = getCase(1, self.index)
+        
+        data = []
+
+        for element in db_element:
+            tmp_dict = {}
+            tmp_dict["caseNum"] = element[0]
+            tmp_dict["latitude"] = element[1]
+            tmp_dict["longitude"] = element[2]
+            tmp_dict["pic"] = element[3]
+            tmp_dict["detectedTime"] = db_element[0][4].strftime("%Y/%m/%d %H:%M:%S")
+
+            data.append(copy.deepcopy(tmp_dict))
+
+        return {
+            'data' : data,
+            'message' : 'Get UnsolvedCase data success',
+            'status' : int(pagetype)
+        }
 
 @Monitoring.route('/unsolved')
 class UnSolved(Resource):
