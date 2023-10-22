@@ -19,6 +19,20 @@ class PageType(Enum):
     def __int__(self):
         return self.value
 
+def isExistCaseNum(table_name, caseNum):
+    db, cursor = connect_database()
+
+    query = f'SELECT COUNT(*) FROM {table_name} WHERE caseNum = {caseNum}'
+    cursor.execute(query)
+    total = cursor.fetchone()[0]
+
+    disconnect_database(db)
+
+    if total == 1:
+        return True
+    else:
+        return False
+
 @Monitoring.route('/unsolved/<int:index>')
 class UnsolvedGet(Resource):
     def get(self, index):
@@ -149,7 +163,7 @@ class UnSolved(Resource):
                 'status' : 40000
             } 
         
-        if self.isExistCaseNum() == False:
+        if isExistCaseNum('UnsolvedCase', self.caseNum) == False:
             return {
                 'message' : 'Invalid case number',
                 'status' : 40001
@@ -170,20 +184,6 @@ class UnSolved(Resource):
                 'message' : 'Database error',
                 'status' : 400
             }
-
-    def isExistCaseNum(self):
-        db, cursor = connect_database()
-
-        query = f'SELECT COUNT(*) FROM UnsolvedCase WHERE caseNum = {self.caseNum}'
-        cursor.execute(query)
-        total = cursor.fetchone()[0]
-
-        disconnect_database(db)
-
-        if total == 1:
-            return True
-        else:
-            return False
         
     def getUnsolvedCaseOne(self):
         db, cursor = connect_database()
