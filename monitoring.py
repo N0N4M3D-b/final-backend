@@ -28,12 +28,13 @@ def checkPageType(table_flag, index):
     
     if table_flag == 0:
         PAGE_MAX = 10
+        query = f'SELECT COUNT(*) FROM UnsolvedCase'
     else:
         PAGE_MAX = 5
+        query = f'SELECT COUNT(*) FROM SolvedCase'
 
     db, cursor = connect_database()
-
-    query = f'SELECT COUNT(*) FROM UnsolvedCase'
+    
     cursor.execute(query)
     total = cursor.fetchone()[0]
 
@@ -149,7 +150,7 @@ class UnsolvedGet(Resource):
             tmp_dict["latitude"] = element[1]
             tmp_dict["longitude"] = element[2]
             tmp_dict["pic"] = element[3]
-            tmp_dict["detectedTime"] = db_element[0][4].strftime("%Y/%m/%d %H:%M:%S")
+            tmp_dict["detectedTime"] = element[4].strftime("%Y/%m/%d %H:%M:%S")
 
             data.append(copy.deepcopy(tmp_dict))
 
@@ -182,7 +183,10 @@ class SolvedGet(Resource):
             tmp_dict["latitude"] = element[1]
             tmp_dict["longitude"] = element[2]
             tmp_dict["pic"] = element[3]
-            tmp_dict["detectedTime"] = db_element[0][4].strftime("%Y/%m/%d %H:%M:%S")
+            tmp_dict["detectedTime"] = element[4].strftime("%Y/%m/%d %H:%M:%S")
+            tmp_dict["solvedTime"] = element[5].strftime("%Y/%m/%d %H:%M:%S")
+            tmp_dict["email"] = element[6]
+            tmp_dict["tel"] = self.getUserTelByEmail(tmp_dict["email"])
 
             data.append(copy.deepcopy(tmp_dict))
 
@@ -191,6 +195,18 @@ class SolvedGet(Resource):
             'message' : 'Get UnsolvedCase data success',
             'status' : int(pagetype)
         }
+    
+    def getUserTelByEmail(self, email):
+        db, cursor = connect_database()
+
+        query = f'SELECT tel FROM Profiles WHERE email = "{email}"'
+        cursor.execute(query)
+        result = cursor.fetchone()[0]
+
+        disconnect_database(db)
+
+        return result
+
 
 @Monitoring.route('/unsolved')
 class UnSolved(Resource):
