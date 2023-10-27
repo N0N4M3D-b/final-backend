@@ -25,10 +25,10 @@ CREATE_SOLVEDCASE_TABLE = '''CREATE TABLE SolvedCase (
     latitude varchar(9) NOT NULL,
     longitude varchar(9) NOT NULL,
     pic varchar(32) NOT NULL,
-    name varchar(20) NOT NULL,
-    email varchar(45) NOT NULL,
     detectedTime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    solvedTime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    solvedTime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    email varchar(45) NOT NULL,
+    name varchar(20) NOT NULL
 )
 '''
 

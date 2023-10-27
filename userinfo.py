@@ -35,7 +35,6 @@ class Myinfo(Resource):
                 'message' : 'Invalid user info',
                 'status' : 40000
             }
-        
 
     def delete(self):
         # Parse request arguments
@@ -60,8 +59,6 @@ class Myinfo(Resource):
                 'message' : 'Invalid user info',
                 'status' : 40000
             }
-        
-
 
     def put(self):
         # Parse request arguments
@@ -86,7 +83,7 @@ class Myinfo(Resource):
         else:
             return {
                 'message' : 'change password fail',
-                'status' : 40000
+                'status' : 40001
             }
 
     
@@ -138,7 +135,12 @@ class Myinfo(Resource):
 
         query = f'UPDATE Profiles SET password="{self.new}" WHERE email="{self.email}"'
 
-        cursor.execute(query)
+        try:
+            cursor.execute(query)
+        except:
+            db.rollback()
+            raise
+
         db.commit()
 
         disconnect_database(db)
