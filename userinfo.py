@@ -21,21 +21,20 @@ class Myinfo(Resource):
                 'status' : 400
             }
 
-        try:
-            name, tel = self.getUserInfo()
-        except:
+        success, name, tel = self.getUserInfo()
+
+        if success:
+            return {
+                'name' : name,
+                'tel' : tel,
+                'message' : 'success',
+                'status' : 200
+            }
+        else:
             return {
                 'message' : 'Invalid user info',
                 'status' : 40000
             }
-
-        return {
-            'name' : name,
-            'tel' : tel,
-            'message' : 'success',
-            'status' : 200
-        }
-        
 
     def delete(self):
         # Parse request arguments
@@ -48,9 +47,9 @@ class Myinfo(Resource):
                 'status' : 400
             }
 
-        result = self.deleteUser()
+        success = self.deleteUser()
 
-        if result:
+        if success:
             return {
                 'message' : 'user delete success',
                 'status' : 200
@@ -60,7 +59,6 @@ class Myinfo(Resource):
                 'message' : 'Invalid user info',
                 'status' : 40000
             }
-
 
     def put(self):
         # Parse request arguments
@@ -75,15 +73,9 @@ class Myinfo(Resource):
                 'status' : 400
             }
 
-        try:
-            result = self.changePassword()
-        except:
-            return {
-                'message' : 'Invalid user info',
-                'status' : 40000
-            }
+        success = self.changePassword()
 
-        if result:
+        if success:
             return {
                 'message' : 'change password success',
                 'status' : 200
@@ -100,25 +92,33 @@ class Myinfo(Resource):
         query = f'SELECT name, tel FROM Profiles WHERE email="{self.email}"'
 
         cursor.execute(query)
-        name, tel = cursor.fetchall()[0]
+        result = cursor.fetchall()
+        if len(result) == 0:
+            return False, None, None
+        
+        name, tel = result[0]
 
         disconnect_database(db)
 
-        return name, tel
+        return True, name, tel
 
     
     def deleteUser(self):
         db, cursor = connect_database()
-        query = f'SELECT 1 FROM Profiles WHERE email="{self.email}"'
+        query = f'SELECT 1 from Profiles WHERE email="{self.email}"'
         cursor.execute(query)
 
-        if len(cursor.fetchall()) == 0:
+        is_valid = len(cursor.fetchall()) != 0
+
+        if not is_valid:
             return False
 
         query = f'DELETE FROM Profiles WHERE email="{self.email}"'
 
         cursor.execute(query)
         db.commit()
+
+        disconnect_database(db)
 
         return True
 
@@ -142,5 +142,7 @@ class Myinfo(Resource):
             raise
 
         db.commit()
+
+        disconnect_database(db)
 
         return True
