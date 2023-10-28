@@ -105,17 +105,22 @@ class Myinfo(Resource):
     
     def deleteUser(self):
         db, cursor = connect_database()
-        query = f'SELECT 1 from Profiles WHERE email="{self.email}"'
+        query = f'SELECT * from Profiles WHERE email="{self.email}"'
         cursor.execute(query)
 
-        is_valid = len(cursor.fetchall()) != 0
+        user_info = cursor.fetchall()
 
-        if not is_valid:
+        if len(user_info) == 0:
             return False
 
-        query = f'DELETE FROM Profiles WHERE email="{self.email}"'
+        user_info = user_info[0]
 
+        query = f'DELETE FROM Profiles WHERE email="{self.email}"'
         cursor.execute(query)
+
+        query = f'INSERT INTO DeletedProfiles VALUES ("{user_info[0]}", "{user_info[1]}", "{user_info[2]}", "{user_info[3]}")'
+        cursor.execute(query)
+
         db.commit()
 
         disconnect_database(db)
