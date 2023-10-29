@@ -110,9 +110,9 @@ def setCaseOne(table_flag, case_num_data, email=None, name=None, new_case_flag=N
     if table_flag == 0 and new_case_flag == True:
         query = f'INSERT INTO UnsolvedCase VALUES (NULL, "{case_num_data[1]}", "{case_num_data[2]}", "{case_num_data[3]}", CURRENT_TIMESTAMP)'
     elif table_flag == 0:
-        query = f'INSERT INTO SolvedCase VALUES (NULL, "{case_num_data[1]}", "{case_num_data[2]}", "{case_num_data[3]}", "{case_num_data[4].strftime("%Y/%m/%d %H:%M:%S")}", CURRENT_TIMESTAMP, "{email}", "{name}")'
+        query = f'INSERT INTO SolvedCase VALUES ({case_num_data[0]}, "{case_num_data[1]}", "{case_num_data[2]}", "{case_num_data[3]}", "{case_num_data[4].strftime("%Y/%m/%d %H:%M:%S")}", CURRENT_TIMESTAMP, "{email}", "{name}")'
     else:
-        query = f'INSERT INTO UnsolvedCase VALUES (NULL, "{case_num_data[1]}", "{case_num_data[2]}", "{case_num_data[3]}", "{case_num_data[4].strftime("%Y/%m/%d %H:%M:%S")}")'
+        query = f'INSERT INTO UnsolvedCase VALUES ({case_num_data[0]}, "{case_num_data[1]}", "{case_num_data[2]}", "{case_num_data[3]}", "{case_num_data[4].strftime("%Y/%m/%d %H:%M:%S")}")'
 
     cursor.execute(query)
     db.commit()
@@ -229,7 +229,6 @@ class UnSolved(Resource):
         
         try:
             case_num_data = (None, self.latitude, self.longitude, self.pic)
-            print(case_num_data[1])
             setCaseOne(0, case_num_data, new_case_flag=True)
         except:
             return {
@@ -305,7 +304,7 @@ class Solved(Resource):
                 'status' : 400
             }
         
-        if isExistCaseNum(0, self.caseNum) == False:
+        if isExistCaseNum(1, self.caseNum) == False:
             return {
                 'message' : 'Invalid case number',
                 'status' : 40000
