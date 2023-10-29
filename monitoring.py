@@ -15,12 +15,14 @@ class PageType(Enum):
     FIRST = 20001
     LAST = 20002
     MIDDLE = 20003
+    NONE = 20004
 
     def __int__(self):
         return self.value
 
 def checkPageType(table_flag, index):
     # out of boundary -> total < index
+    # none page -> element zero
     # single page (0) -> total <= (10/5)
     # first page -> index == 1
     # last page -> total - index < (10/5)
@@ -40,7 +42,9 @@ def checkPageType(table_flag, index):
 
     disconnect_database(db)
 
-    if index > total or index < 1:
+    if total == 0:
+        return PageType.NONE
+    elif index > total or index < 1:
         return PageType.OOB
     elif index == 1:
         if total <= PAGE_MAX:
@@ -192,7 +196,7 @@ class SolvedGet(Resource):
 
         return {
             'data' : data,
-            'message' : 'Get UnsolvedCase data success',
+            'message' : 'Get SolvedCase data success',
             'status' : int(pagetype)
         }
     
