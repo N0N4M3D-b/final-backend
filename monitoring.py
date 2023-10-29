@@ -186,6 +186,7 @@ class SolvedGet(Resource):
             tmp_dict["detectedTime"] = element[4].strftime("%Y/%m/%d %H:%M:%S")
             tmp_dict["solvedTime"] = element[5].strftime("%Y/%m/%d %H:%M:%S")
             tmp_dict["email"] = element[6]
+            tmp_dict["name"] = element[7]
             tmp_dict["tel"] = self.getUserTelByEmail(tmp_dict["email"])
 
             data.append(copy.deepcopy(tmp_dict))
