@@ -118,9 +118,6 @@ class Myinfo(Resource):
         query = f'DELETE FROM Profiles WHERE email="{self.email}"'
         cursor.execute(query)
 
-        query = f'INSERT INTO DeletedProfiles VALUES ("{user_info[0]}", "{user_info[1]}", "{user_info[2]}", "{user_info[3]}")'
-        cursor.execute(query)
-
         db.commit()
 
         disconnect_database(db)
