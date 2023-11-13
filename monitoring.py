@@ -104,13 +104,13 @@ def getCaseOne(table_flag, caseNum):
 
     return result
 
-def setCaseOne(table_flag, case_num_data, email=None, name=None, new_case_flag=None):
+def setCaseOne(table_flag, case_num_data, email=None, name=None, tel=None, new_case_flag=None):
     db, cursor = connect_database()
     
     if table_flag == 0 and new_case_flag == True:
         query = f'INSERT INTO UnsolvedCase VALUES (NULL, "{case_num_data[1]}", "{case_num_data[2]}", "{case_num_data[3]}", CURRENT_TIMESTAMP)'
     elif table_flag == 0:
-        query = f'INSERT INTO SolvedCase VALUES ({case_num_data[0]}, "{case_num_data[1]}", "{case_num_data[2]}", "{case_num_data[3]}", "{case_num_data[4].strftime("%Y/%m/%d %H:%M:%S")}", CURRENT_TIMESTAMP, "{email}", "{name}")'
+        query = f'INSERT INTO SolvedCase VALUES ({case_num_data[0]}, "{case_num_data[1]}", "{case_num_data[2]}", "{case_num_data[3]}", "{case_num_data[4].strftime("%Y/%m/%d %H:%M:%S")}", CURRENT_TIMESTAMP, "{email}", "{name}", "{tel}")'
     else:
         query = f'INSERT INTO UnsolvedCase VALUES ({case_num_data[0]}, "{case_num_data[1]}", "{case_num_data[2]}", "{case_num_data[3]}", "{case_num_data[4].strftime("%Y/%m/%d %H:%M:%S")}")'
 
@@ -191,7 +191,7 @@ class SolvedGet(Resource):
             tmp_dict["solvedTime"] = element[5].strftime("%Y/%m/%d %H:%M:%S")
             tmp_dict["email"] = element[6]
             tmp_dict["name"] = element[7]
-            tmp_dict["tel"] = self.getUserTelByEmail(tmp_dict["email"])
+            tmp_dict["tel"] = element[8]
 
             data.append(copy.deepcopy(tmp_dict))
 
@@ -200,18 +200,6 @@ class SolvedGet(Resource):
             'message' : 'Get SolvedCase data success',
             'status' : int(pagetype)
         }
-    
-    def getUserTelByEmail(self, email):
-        db, cursor = connect_database()
-
-        query = f'SELECT tel FROM Profiles WHERE email = "{email}"'
-        cursor.execute(query)
-        result = cursor.fetchone()[0]
-
-        disconnect_database(db)
-
-        return result
-
 
 @Monitoring.route('/unsolved')
 class UnSolved(Resource):
@@ -251,7 +239,9 @@ class UnSolved(Resource):
                 'status' : 400
             }
         try:
-            self.name = self.getUserNameByEmail()
+            tmp = self.getUserNameTelByEmail()
+            self.name = tmp[0]
+            self.tel = tmp[1]
         except:
             return {
                 'message' : 'Invalid user access',
@@ -267,7 +257,7 @@ class UnSolved(Resource):
         self.case_num_data = getCaseOne(0, self.caseNum)
 
         try:
-            setCaseOne(0, self.case_num_data, self.email, self.name)
+            setCaseOne(0, self.case_num_data, self.email, self.name, self.tel)
             deleteCaseOne(0, self.caseNum)
 
             return {
@@ -280,12 +270,12 @@ class UnSolved(Resource):
                 'status' : 400
             }
     
-    def getUserNameByEmail(self):
+    def getUserNameTelByEmail(self):
         db, cursor = connect_database()
 
-        query = f'SELECT name FROM Profiles WHERE email = "{self.email}"'
+        query = f'SELECT name, tel FROM Profiles WHERE email = "{self.email}"'
         cursor.execute(query)
-        result = cursor.fetchone()[0]
+        result = cursor.fetchone()
 
         disconnect_database(db)
 
