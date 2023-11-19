@@ -14,16 +14,25 @@ def VerifyJWT(func):
         token = request.headers.get('Authorization').replace('"','').replace("'",'')
         try:
             decode = jwt.decode(token, os.environ['SECRET'], algorithms=['HS256'])
-
+            
             if time.time() > decode['expire_time']:
                 return {'message' : 'JWT Token expired', 'status' : 401}
 
-            return func(*args, **kwargs)
+            result = func(*args, **kwargs)
+            result['token'] = jwt.encode({'email' : GetEmailFromJWT(), 'expire_time': time.time()+(60*1)}, os.environ['SECRET'], algorithm='HS256')
+            
+            return result
         
         except:
             return {'message' : 'JWT Token verify error', 'status' : 403}
         
     return checkJWT
+
+def GetEmailFromJWT():
+    token = request.headers.get('Authorization').replace('"','').replace("'",'')
+    decode = jwt.decode(token, os.environ['SECRET'], algorithms=['HS256'])
+
+    return decode['email']
 
 Login = Namespace('Login')
 
@@ -44,7 +53,7 @@ class Signin(Resource):
         name = self.isValidAccount()
 
         if name != '':
-            token = jwt.encode({'email' : self.email, 'expire_time': time.time()*60*10}, os.environ['SECRET'], algorithm='HS256')
+            token = jwt.encode({'email' : self.email, 'expire_time': time.time()+(60*1)}, os.environ['SECRET'], algorithm='HS256')
             print(token)
             print(type(token))
             return {

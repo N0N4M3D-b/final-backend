@@ -5,15 +5,18 @@ from flask_restx import Namespace
 from flask_restx import reqparse
 from initialize_database import connect_database
 from initialize_database import disconnect_database
+from login import VerifyJWT
+from login import GetEmailFromJWT
 
 Userinfo = Namespace('Userinfo')
 
 @Userinfo.route('')
 class Myinfo(Resource):
+    @VerifyJWT
     def post(self):
         # Parse request arguments
         try:
-            self.email = request.json.get('email')
+            self.email = GetEmailFromJWT()
         except:
             print('[!] /myinfo (POST) : Invalid request data')
             return {
@@ -36,10 +39,11 @@ class Myinfo(Resource):
                 'status' : 40000
             }
 
+    @VerifyJWT
     def delete(self):
         # Parse request arguments
         try:
-            self.email = request.json.get('email')
+            self.email = GetEmailFromJWT()
         except:
             print('[!] /myinfo (DELETE) : Invalid request data')
             return {
@@ -60,10 +64,11 @@ class Myinfo(Resource):
                 'status' : 40000
             }
 
+    @VerifyJWT
     def put(self):
         # Parse request arguments
         try:
-            self.email = request.json.get('email')
+            self.email = GetEmailFromJWT()
             self.old = request.json.get('old')
             self.new = request.json.get('new')
         except:
