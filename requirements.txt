@@ -8,8 +8,9 @@ itsdangerous==2.1.2
 Jinja2==3.1.2
 jsonschema==4.17.3
 MarkupSafe==2.1.2
+PyJWT==2.8.0
 PyMySQL==1.1.0
 pyrsistent==0.19.3
+python-decouple==3.8
 pytz==2023.3
 Werkzeug==2.3.4
-python-decouple==3.8

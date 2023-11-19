@@ -5,6 +5,16 @@ from flask_restx import Namespace
 from flask_restx import reqparse
 from initialize_database import connect_database
 from initialize_database import disconnect_database
+import jwt
+import os
+
+def VerifyJWT(func):
+    def checkJWT(*args, **kwargs):
+        token = request.headers.get('Authorization')
+
+        return func(*args, **kwargs)
+
+    return checkJWT
 
 Login = Namespace('Login')
 

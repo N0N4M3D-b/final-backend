@@ -5,6 +5,7 @@ from flask_restx import Namespace
 from enum import Enum
 from initialize_database import connect_database
 from initialize_database import disconnect_database
+from login import VerifyJWT
 import copy
 
 Monitoring = Namespace('Monitoring')
@@ -132,8 +133,10 @@ def deleteCaseOne(table_flag, caseNum):
 
     disconnect_database(db)
 
+
 @Monitoring.route('/unsolved/<int:index>')
 class UnsolvedGet(Resource):
+    @VerifyJWT
     def get(self, index):
         self.index = index
         pagetype = checkPageType(0, self.index)
