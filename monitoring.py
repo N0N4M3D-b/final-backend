@@ -6,6 +6,7 @@ from enum import Enum
 from initialize_database import connect_database
 from initialize_database import disconnect_database
 from login import VerifyJWT
+from login import GetEmailFromJWT
 import copy
 
 Monitoring = Namespace('Monitoring')
@@ -170,6 +171,7 @@ class UnsolvedGet(Resource):
 
 @Monitoring.route('/solved/<int:index>')
 class SolvedGet(Resource):
+    @VerifyJWT
     def get(self, index):
         self.index = index
         pagetype = checkPageType(1, self.index)
@@ -206,6 +208,7 @@ class SolvedGet(Resource):
 
 @Monitoring.route('/unsolved')
 class UnSolved(Resource):
+    @VerifyJWT
     def post(self):
         try:
             self.latitude = request.json.get('latitude')
@@ -231,10 +234,11 @@ class UnSolved(Resource):
             'status' : 200
         }
 
+    @VerifyJWT
     def put(self):
         try:
             self.caseNum = int(request.json.get('caseNum'))
-            self.email = request.json.get('email')
+            self.email = GetEmailFromJWT()
         except:
             print('[!] /list/unsolved (PUT) : Invalid request data')
             return {
@@ -287,6 +291,7 @@ class UnSolved(Resource):
 
 @Monitoring.route('/solved')
 class Solved(Resource):
+    @VerifyJWT
     def put(self):
         try:
             self.caseNum = int(request.json.get('caseNum'))
@@ -319,6 +324,7 @@ class Solved(Resource):
                 'status' : 400
             }
 
+    @VerifyJWT
     def delete(self):
         try:
             self.caseNum = int(request.json.get('caseNum'))
