@@ -1,4 +1,5 @@
 import pymysql
+import time
 
 CREATE_WHITELIST_TABLE = '''CREATE TABLE WhiteList (
     email varchar(45) PRIMARY KEY
@@ -41,14 +42,22 @@ class InitializeDatabase:
         self.conn.close()
 
     def CreateTable(self):
-        self.conn = pymysql.connect(host='database', user='finaluser', password='dongafinal1234!', db='final', charset='utf8')
-        self.cursor = self.conn.cursor()
+        db_connection_flag = False
 
-        for query in queries:
+        for _ in range(10):
             try:
-                self.cursor.execute(query)
+                self.conn = pymysql.connect(host='database', user='finaluser', password='dongafinal1234!', db='final', charset='utf8')
             except:
+                time.sleep(1)
                 continue
+            
+            self.cursor = self.conn.cursor()
+
+            for query in queries:
+                try:
+                    self.cursor.execute(query)
+                except:
+                    continue
 
 def connect_database():
     db = pymysql.connect(host='database',
