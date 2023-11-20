@@ -11,8 +11,8 @@ import os
 
 def VerifyJWT(func):
     def checkJWT(*args, **kwargs):
-        token = request.headers.get('Authorization').replace('"','').replace("'",'')
         try:
+            token = request.headers.get('Authorization').replace('"','').replace("'",'')
             decode = jwt.decode(token, os.environ['SECRET'], algorithms=['HS256'])
             
             if time.time() > decode['expire_time']:
